@@ -35,7 +35,8 @@ jobs:
 
       - name: Create Delta Folder
         run: |
-          mkdir delta
+          rm -rf delta
+          mkdir -p delta
 
       - name: Generate Delta Package
         run: |
