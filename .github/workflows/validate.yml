@@ -1,0 +1,56 @@
+name: Salesforce Validation Deployment
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  validate-deployment:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Salesforce CLI
+        run: |
+          npm install -g @salesforce/cli
+
+      - name: Install SGD Plugin
+        run: |
+          echo y | sf plugins install sfdx-git-delta
+
+      - name: Authenticate TEST Org
+        run: |
+          echo "${{ secrets.SF_AUTH_TEST }}" > authFile.txt
+
+          sf org login sfdx-url \
+            --sfdx-url-file authFile.txt \
+            --alias TEST
+
+      - name: Create Delta Folder
+        run: |
+          rm -rf delta
+          mkdir -p delta
+
+      - name: Generate Delta Package
+        run: |
+          sf sgd source delta \
+            --to HEAD \
+            --from origin/develop \
+            --output-dir delta \
+            --generate-delta
+
+      - name: Validate Deployment
+        run: |
+          sf project deploy validate \
+            --manifest delta/package/package.xml \
+            --target-org TEST \
+            --test-level RunSpecifiedTests \
+            --tests DeltaAccountServiceTest \
+            --wait 30
