@@ -1,14 +1,6 @@
-@isTest
-private class DeltaAccountService {
+public with sharing class DeltaAccountService {
 
-    @isTest
-    static void testGetMessage() {
-
-        String result = DeltaAccountService.getMessage();
-
-        System.assertEquals(
-            'Delta v2 deployment POC',
-            result
-        );
+    public static String getMessage() {
+        return 'Delta v2 deployment POC';
     }
 }
