@@ -1,5 +1,6 @@
 public with sharing class DeltaAccountService {
-    public DeltaAccountService() {
 
+    public static String getMessage() {
+        return 'Delta deployment POC';
     }
 }
