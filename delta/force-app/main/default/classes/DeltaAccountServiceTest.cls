@@ -1,5 +1,5 @@
 @isTest
-private class DeltaAccountService {
+private class DeltaAccountServiceTest {
 
     @isTest
     static void testGetMessage() {
