@@ -88,3 +88,10 @@ outputs:
         PR_USER: ${{ github.event.pull_request.user.login }}
 
         --
+---
+if [ -f dependency.json ]; then
+  summary_risk=$(jq -r '.[] | select(.name == "summary_risk") | .severity' dependency.json)
+else
+  echo "dependency.json not found. Using default risk."
+  summary_risk="low"
+fi
