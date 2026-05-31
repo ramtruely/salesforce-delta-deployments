@@ -1,0 +1,90 @@
+if: needs.pre-requisite.outputs.is_first_active_pr != 'true'
+
+---
+if: needs.pre-requisite.outputs.is_first_active_pr == 'true'
+--
+outputs:
+  is_org_dep: ${{ env.IS_ORG_DEP }}
+  sandbox: ${{ env.SANDBOX }}
+  runner: ${{ env.runner }}
+  main_code: ${{ env.main_code }}
+  apex_code: ${{ env.classes_changed }}
+  lwc_code: ${{ env.lwc_code }}
+  is_merge_pr: ${{ env.is_merge_pr }}
+  is_first_active_pr: ${{ env.is_first_active_pr }}
+  --
+  echo "Checking active PR count for base branch: $Basebranch"
+
+OPEN_PR_COUNT=$(curl -s \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  "https://api.github.com/repos/${GITHUB_REPO}/pulls?state=open&base=${Basebranch}" \
+  | jq 'length')
+
+echo "Open PR Count: $OPEN_PR_COUNT"
+
+if [ "$OPEN_PR_COUNT" -eq 1 ]; then
+    is_first_active_pr="true"
+    echo "First Active PR detected"
+else
+    is_first_active_pr="false"
+    echo "Not First Active PR"
+fi
+
+echo "is_first_active_pr=${is_first_active_pr}" >> $GITHUB_ENV
+echo "is_first_active_pr=${is_first_active_pr}" >> $GITHUB_OUTPUT
+---
+outputs:
+  is_org_dep:
+    description: "Org dependent package"
+    value: ${{ steps.main.outputs.is_org_dep }}
+
+  sandbox:
+    description: "Target sandbox"
+    value: ${{ steps.main.outputs.sandbox }}
+
+  runner:
+    description: "Target runner"
+    value: ${{ steps.main.outputs.runner }}
+
+  main_code:
+    description: "Main code changed"
+    value: ${{ steps.main.outputs.main_code }}
+
+  apex_code:
+    description: "Apex code changed"
+    value: ${{ steps.main.outputs.apex_code }}
+
+  lwc_code:
+    description: "LWC code changed"
+    value: ${{ steps.main.outputs.lwc_code }}
+
+  is_merge_pr:
+    description: "Merge PR detection"
+    value: ${{ steps.main.outputs.is_merge_pr }}
+
+  is_first_active_pr:
+    description: "First active PR targeting environment"
+    value: ${{ steps.main.outputs.is_first_active_pr }}
+
+    --
+    runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Run main script
+      id: main
+      shell: bash
+      run: |
+        chmod +x ${{ github.action_path }}/main.sh
+        ${{ github.action_path }}/main.sh
+      env:
+        GITHUB_TOKEN: ${{ inputs.gh_token }}
+        GITHUB_REPO: ${{ inputs.github_repo }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        PR_USER: ${{ github.event.pull_request.user.login }}
+
+        --
